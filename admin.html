@@ -225,10 +225,21 @@ function handleLogout() {
         }
     }
 
-    // Fungsi Logout Admin
+   // 1. Proteksi Halaman Admin
+    if (localStorage.getItem('admin_authenticated') !== 'true') {
+        // Jangan tampilkan alert berulang jika baru saja logout
+        window.location.href = "index.html";
+    }
+
+    // 2. Fungsi Logout yang Bersih
     function handleLogout() {
         if (confirm("Apakah Anda yakin ingin keluar dari Admin Panel?")) {
-            window.location.href = "index.html";
+            // Hapus semua key autentikasi
+            localStorage.removeItem('admin_authenticated');
+            sessionStorage.clear();
+            
+            // Redirect ke halaman utama pengunjung
+            window.location.replace("index.html"); // Gunakan replace agar tidak bisa di-Back oleh browser
         }
     }
 
