@@ -243,24 +243,24 @@
                 document.getElementById('pinInput').focus();
             }
         }
-async function verifyAdminPin(enteredPin) {
-  try {
-    const response = await fetch(`${SCRIPT_URL}?action=checkPin&pin=${encodeURIComponent(enteredPin)}`);
-    const result = await response.json();
+sync function submitPin() {
+    const pinInput = document.getElementById('pinInput').value;
     
-    if (result.success) {
-      localStorage.setItem('admin_authenticated', 'true');
-      
-      // Beri sedikit jeda agar storage tersimpan sempurna sebelum redirect
-      setTimeout(() => {
-        window.location.href = "admin.html";
-      }, 100);
-    } else {
-      alert("PIN Salah!");
+    // Kirim PIN ke Google Apps Script untuk diverifikasi
+    try {
+        const response = await fetch(`${SCRIPT_URL}?action=checkPin&pin=${encodeURIComponent(pinInput)}`);
+        const result = await response.json();
+
+        if (result.success) {
+            // PIN Benar: Simpan tanda login dan pindah ke admin
+            localStorage.setItem('admin_authenticated', 'true');
+            window.location.href = "admin.html";
+        } else {
+            alert("PIN Salah!");
+        }
+    } catch (error) {
+        alert("Gagal memverifikasi PIN.");
     }
-  } catch (error) {
-    alert("Terjadi kesalahan koneksi saat verifikasi PIN.");
-  }
 }
         // Handle Presensi Form Submit
         async function handleFormSubmit(event) {
