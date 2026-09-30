@@ -164,15 +164,15 @@
     <!-- Logic Script -->
     <script>
         // Cek status login saat halaman admin dimuat
-if (sessionStorage.getItem('admin_authenticated') !== 'true') {
+// Cek dari localStorage
+if (localStorage.getItem('admin_authenticated') !== 'true') {
     alert("Akses ditolak! Silakan login terlebih dahulu.");
     window.location.href = "index.html";
 }
 
-// Hapus session saat logout
 function handleLogout() {
-    if (confirm("Apakah Anda yakin ingin keluar dari Admin Panel?")) {
-        sessionStorage.removeItem('admin_authenticated');
+    if (confirm("Apakah Anda yakin ingin keluar?")) {
+        localStorage.removeItem('admin_authenticated'); // Hapus token saat logout
         window.location.href = "index.html";
     }
 }
