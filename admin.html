@@ -163,8 +163,21 @@
 
     <!-- Logic Script -->
     <script>
+        // Cek status login saat halaman admin dimuat
+if (sessionStorage.getItem('admin_authenticated') !== 'true') {
+    alert("Akses ditolak! Silakan login terlebih dahulu.");
+    window.location.href = "index.html";
+}
+
+// Hapus session saat logout
+function handleLogout() {
+    if (confirm("Apakah Anda yakin ingin keluar dari Admin Panel?")) {
+        sessionStorage.removeItem('admin_authenticated');
+        window.location.href = "index.html";
+    }
+}
     // GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCdhA7Bl7aYmAOyB9EGuqX0cKQqLoDf3AxCyr1vJypNTvds2jSHjEL6JLIgsKgBt2o6w/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyn__jn3dxJtKPRtr4GfjMYErNY1WSF_NF_thCsCn1moVbZ23-D9GmM6Fjr2IuqvCkv6g/exec";
 
     let dataPresensi = [];
 
