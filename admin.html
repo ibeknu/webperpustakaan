@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Presensi Pengunjung Perpustakaan</title>
+    <title>Admin Panel - Presensi Perpustakaan</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -15,33 +15,42 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-    <!-- Navbar / Header -->
-    <header class="bg-indigo-700 text-white shadow-lg">
+    <!-- Header / Navbar Admin -->
+    <header class="bg-indigo-700 text-white shadow-lg border-b border-indigo-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            
+            <!-- Logo & Title -->
             <div class="flex items-center space-x-3">
-                <div class="p-3 bg-indigo-800 rounded-lg">
-                    <i class="fa-solid fa-book-open text-2xl text-amber-300"></i>
+                <div class="p-2.5 bg-indigo-800 rounded-xl border border-indigo-600/50">
+                    <i class="fa-solid fa-user-shield text-2xl text-amber-300"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold tracking-tight">Perpustakaan Unipa Kampus Blitar</h1>
-                    <p class="text-xs text-indigo-200">Terintegrasi Google Sheets Backend</p>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-xl font-bold tracking-tight">Admin Panel Presensi</h1>
+                        <span class="px-2 py-0.5 bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] font-bold uppercase rounded-full">Petugas</span>
+                    </div>
+                    <p class="text-xs text-indigo-200">Monitoring & Rekapitulasi Kunjungan Perpustakaan</p>
                 </div>
             </div>
-            <!-- Live Clock & Status -->
+
+            <!-- Header Controls (Clock + Logout Button) -->
             <div class="flex items-center gap-4">
-                <div id="statusBadge" class="hidden sm:flex items-center gap-2 px-3 py-1 bg-emerald-600/30 border border-emerald-400/40 rounded-full text-xs text-emerald-200">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                    <span>Google Sheets Connected</span>
+                <!-- Status & Live Clock -->
+                <div class="hidden sm:block text-right border-r border-indigo-500/50 pr-4">
+                    <div id="liveClock" class="text-base font-mono font-bold tracking-wider">00:00:00</div>
+                    <div id="liveDate" class="text-[11px] text-indigo-200">30 September 2026</div>
                 </div>
-                <div class="text-right">
-                    <div id="liveClock" class="text-lg font-mono font-bold tracking-wider">00:00:00</div>
-                    <div id="liveDate" class="text-xs text-indigo-200">Rabu, 30 September 2026</div>
-                </div>
+
+                <!-- Tombol Logout -->
+                <button onclick="handleLogout()" class="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white text-xs font-semibold rounded-lg shadow-md border border-rose-500 flex items-center gap-2 transition duration-150">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Keluar (Logout)</span>
+                </button>
             </div>
         </div>
     </header>
 
-    <!-- Main Content -->
+    <!-- Main Content Dashboard -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
         
         <!-- Summary Cards -->
@@ -87,155 +96,82 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            <!-- Left Column: Form Presensi -->
-            <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <div class="flex items-center space-x-2 border-b border-slate-100 pb-4 mb-5">
-                    <i class="fa-solid fa-user-pen text-indigo-600"></i>
-                    <h2 class="text-lg font-semibold text-slate-800">Form Presensi Baru</h2>
-                </div>
-
-                <form id="presensiForm" onsubmit="handleFormSubmit(event)" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Nama Lengkap *</label>
-                        <input type="text" id="namaInput" required placeholder="Contoh: Ahmad Rizki"
-                            class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+        <!-- Table & Controls Section -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
+            <div>
+                <!-- Bar Controls: Search, Export & Clear -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 border-b border-slate-100 pb-4">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-list-check text-indigo-600"></i>
+                        <h2 class="text-lg font-semibold text-slate-800">Daftar Rekap Presensi</h2>
                     </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">NIM / NIK / ID *</label>
-                        <input type="text" id="idInput" required placeholder="Contoh: 202610234"
-                            class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Kategori Pengunjung *</label>
-                        <select id="kategoriInput" required
-                            class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition bg-white">
-                            <option value="">-- Pilih Kategori --</option>
-                            <option value="Siswa/Mahasiswa">Siswa / Mahasiswa</option>
-                            <option value="Dosen/Guru">Dosen / Guru</option>
-                            <option value="Tenaga Pendidik">Tenaga Pendidik</option>
-                            <option value="Umum">Masyarakat Umum</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Keperluan *</label>
-                        <select id="keperluanInput" required
-                            class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition bg-white">
-                            <option value="">-- Pilih Keperluan --</option>
-                            <option value="Membaca Buku">Membaca Buku</option>
-                            <option value="Meminjam/Mengembalikan">Meminjam / Mengembalikan Buku</option>
-                            <option value="Tugas & Riset">Mengerjakan Tugas / Riset</option>
-                            <option value="Diskusi Kelompok">Diskusi Kelompok</option>
-                            <option value="Akses Komputer/Internet">Akses Komputer / Internet</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Catatan (Opsional)</label>
-                        <textarea id="catatanInput" rows="2" placeholder="Judul buku / nomor meja..."
-                            class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"></textarea>
-                    </div>
-
-                    <button type="submit" id="btnSubmit"
-                        class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-medium rounded-lg shadow transition duration-150 flex items-center justify-center space-x-2">
-                        <i class="fa-solid fa-paper-plane"></i>
-                        <span>Simpan Presensi</span>
-                    </button>
-                </form>
-            </div>
-
-            <!-- Right Column: Table & Controls -->
-            <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
-                <div>
-                    <!-- Controls Bar -->
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 border-b border-slate-100 pb-4">
-                        <div class="flex items-center space-x-2">
-                            <i class="fa-solid fa-list-check text-indigo-600"></i>
-                            <h2 class="text-lg font-semibold text-slate-800">Riwayat Kunjungan</h2>
+                    
+                    <div class="flex items-center gap-2">
+                        <!-- Search Box -->
+                        <div class="relative flex-grow sm:flex-grow-0">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 text-xs"></i>
+                            <input type="text" id="searchInput" oninput="renderTable()" placeholder="Cari nama/ID..."
+                                class="w-full sm:w-56 pl-8 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
                         </div>
                         
-                        <div class="flex items-center gap-2">
-                            <!-- Search Field -->
-                            <div class="relative flex-grow sm:flex-grow-0">
-                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 text-xs"></i>
-                                <input type="text" id="searchInput" oninput="renderTable()" placeholder="Cari nama/ID..."
-                                    class="w-full sm:w-48 pl-8 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
-                            </div>
-                            
-                            <!-- Export Button -->
-                            <button onclick="exportToCSV()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg shadow flex items-center gap-1.5 transition">
-                                <i class="fa-solid fa-file-excel"></i>
-                                <span class="hidden sm:inline">Export CSV</span>
-                            </button>
+                        <!-- Export Button -->
+                        <button onclick="exportToCSV()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium rounded-lg shadow flex items-center gap-1.5 transition">
+                            <i class="fa-solid fa-file-excel"></i>
+                            <span class="hidden sm:inline">Export CSV</span>
+                        </button>
 
-                            <!-- Clear Data Button -->
-                            <button onclick="clearData()" class="px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-medium rounded-lg border border-rose-200 transition">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Table Container -->
-                    <div class="overflow-x-auto rounded-lg border border-slate-200 max-h-[420px] overflow-y-auto">
-                        <table class="w-full text-left text-xs border-collapse">
-                            <thead class="bg-slate-100 text-slate-600 sticky top-0 font-semibold uppercase tracking-wider">
-                                <tr>
-                                    <th class="py-3 px-4 border-b">Waktu</th>
-                                    <th class="py-3 px-4 border-b">Nama</th>
-                                    <th class="py-3 px-4 border-b">ID/NIM</th>
-                                    <th class="py-3 px-4 border-b">Kategori</th>
-                                    <th class="py-3 px-4 border-b">Keperluan</th>
-                                    <th class="py-3 px-4 border-b">Catatan</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tableBody" class="divide-y divide-slate-100 bg-white">
-                                <!-- Dynamic rows via JS -->
-                            </tbody>
-                        </table>
+                        <!-- Clear Local Data Button -->
+                        <button onclick="clearData()" title="Hapus Data Lokal Browser" class="px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-medium rounded-lg border border-rose-200 transition">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
                     </div>
                 </div>
 
-                <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
-                    <span id="dataCounter">Menampilkan 0 data</span>
-                    <span class="text-slate-400"><i class="fa-solid fa-cloud-arrow-up mr-1"></i>Auto Sync Google Sheets</span>
+                <!-- Table Container -->
+                <div class="overflow-x-auto rounded-lg border border-slate-200 max-h-[500px] overflow-y-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead class="bg-slate-100 text-slate-600 sticky top-0 font-semibold uppercase tracking-wider">
+                            <tr>
+                                <th class="py-3 px-4 border-b">Waktu</th>
+                                <th class="py-3 px-4 border-b">Nama Lengkap</th>
+                                <th class="py-3 px-4 border-b">ID / NIM / NIK</th>
+                                <th class="py-3 px-4 border-b">Kategori</th>
+                                <th class="py-3 px-4 border-b">Keperluan</th>
+                                <th class="py-3 px-4 border-b">Catatan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody" class="divide-y divide-slate-100 bg-white">
+                            <!-- Dynamic Rows Generated via JS -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
+            <!-- Table Footer Indicator -->
+            <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
+                <span id="dataCounter">Menampilkan 0 data</span>
+                <span class="text-slate-400"><i class="fa-solid fa-database mr-1"></i>Tersimpan di LocalStorage & Google Sheets</span>
+            </div>
         </div>
+
     </main>
 
     <!-- Footer -->
     <footer class="bg-slate-800 text-slate-400 py-4 text-center text-xs mt-auto">
-        <p>&copy; 2026 Sistem Presensi Perpustakaan. Powered by Unipa Kampus Blitar.</p>
+        <p>&copy; 2026 Admin Panel - Sistem Presensi Perpustakaan.</p>
     </footer>
 
-    <!-- JavaScript Integration Script -->
+    <!-- Logic Script -->
     <script>
-        // =========================================================================
-        // CONFIGURATION: PASANG URL GOOGLE APPS SCRIPT ANDA DI BAWAH INI
-        // =========================================================================
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbyCdhA7Bl7aYmAOyB9EGuqX0cKQqLoDf3AxCyr1vJypNTvds2jSHjEL6JLIgsKgBt2o6w/exec";
-        // =========================================================================
-
         let dataPresensi = JSON.parse(localStorage.getItem('absensi_perpus_data')) || [];
 
-        // Initial setup on page load
         document.addEventListener('DOMContentLoaded', () => {
             updateClock();
             setInterval(updateClock, 1000);
             renderTable();
             updateStats();
-
-            if (GAS_URL && !GAS_URL.includes("PASANG_URL")) {
-                document.getElementById('statusBadge').classList.remove('hidden');
-            }
         });
 
-        // Live Clock function
         function updateClock() {
             const now = new Date();
             document.getElementById('liveClock').textContent = now.toLocaleTimeString('id-ID');
@@ -244,59 +180,14 @@
             });
         }
 
-        // Submit Form Handler
-        async function handleFormSubmit(event) {
-            event.preventDefault();
-
-            const btnSubmit = document.getElementById('btnSubmit');
-            const originalBtnText = btnSubmit.innerHTML;
-
-            // Prepare record object
-            const now = new Date();
-            const record = {
-                timestamp: now.toLocaleString('id-ID'),
-                nama: document.getElementById('namaInput').value.trim(),
-                nim_nik: document.getElementById('idInput').value.trim(),
-                kategori: document.getElementById('kategoriInput').value,
-                keperluan: document.getElementById('keperluanInput').value,
-                catatan: document.getElementById('catatanInput').value.trim() || '-'
-            };
-
-            // Loading State UI
-            btnSubmit.disabled = true;
-            btnSubmit.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i><span>Menyimpan...</span>`;
-
-            // 1. Simpan ke LocalStorage
-            dataPresensi.unshift(record);
-            localStorage.setItem('absensi_perpus_data', JSON.stringify(dataPresensi));
-
-            // 2. Kirim ke Google Sheets via Fetch API
-            if (GAS_URL && !GAS_URL.includes("PASANG_URL")) {
-                try {
-                    await fetch(GAS_URL, {
-                        method: 'POST',
-                        mode: 'no-cors', // Penting untuk bypass CORS policy Google Apps Script
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(record)
-                    });
-                } catch (error) {
-                    console.error("Gagal mengirim ke Google Sheets:", error);
-                }
+        // Fungsi Logout Admin
+        function handleLogout() {
+            if (confirm("Apakah Anda yakin ingin keluar dari Admin Panel?")) {
+                window.location.href = "index.html"; // Kembali ke form pengunjung
             }
-
-            // Update UI & Reset Form
-            renderTable();
-            updateStats();
-            document.getElementById('presensiForm').reset();
-
-            // Reset Button UI
-            btnSubmit.disabled = false;
-            btnSubmit.innerHTML = originalBtnText;
-
-            alert("Presensi berhasil disimpan!");
         }
 
-        // Render Table Rows
+        // Render Tabel Presensi
         function renderTable() {
             const tbody = document.getElementById('tableBody');
             const searchQuery = document.getElementById('searchInput').value.toLowerCase();
@@ -316,7 +207,7 @@
                     <tr>
                         <td colspan="6" class="py-8 text-center text-slate-400">
                             <i class="fa-solid fa-inbox text-3xl mb-2 block"></i>
-                            Belum ada data presensi.
+                            Belum ada data presensi yang terekam.
                         </td>
                     </tr>`;
                 return;
@@ -337,7 +228,7 @@
             });
         }
 
-        // Update Summary Statistics
+        // Update Statistik Kartu Ringkasan
         function updateStats() {
             document.getElementById('statTotal').textContent = dataPresensi.length;
             document.getElementById('statTerakhir').textContent = dataPresensi.length > 0 ? dataPresensi[0].nama : '-';
@@ -348,20 +239,18 @@
                 return;
             }
 
-            // Hitung Mode (paling sering muncul) untuk Kategori
             const countKategori = {};
             dataPresensi.forEach(i => countKategori[i.kategori] = (countKategori[i.kategori] || 0) + 1);
             const maxKategori = Object.keys(countKategori).reduce((a, b) => countKategori[a] > countKategori[b] ? a : b);
             document.getElementById('statKategori').textContent = maxKategori;
 
-            // Hitung Mode untuk Keperluan
             const countKeperluan = {};
             dataPresensi.forEach(i => countKeperluan[i.keperluan] = (countKeperluan[i.keperluan] || 0) + 1);
             const maxKeperluan = Object.keys(countKeperluan).reduce((a, b) => countKeperluan[a] > countKeperluan[b] ? a : b);
             document.getElementById('statKeperluan').textContent = maxKeperluan;
         }
 
-        // Export Data to CSV
+        // Export Data Ke CSV (Excel)
         function exportToCSV() {
             if (dataPresensi.length === 0) {
                 alert("Tidak ada data untuk diekspor!");
@@ -369,7 +258,7 @@
             }
 
             let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "Waktu,Nama,ID/NIM,Kategori,Keperluan,Catatan\n";
+            csvContent += "Waktu,Nama Lengkap,ID/NIM,Kategori,Keperluan,Catatan\n";
 
             dataPresensi.forEach(row => {
                 const line = [
@@ -386,15 +275,15 @@
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `Presensi_Perpustakaan_${new Date().toISOString().slice(0,10)}.csv`);
+            link.setAttribute("download", `Rekap_Presensi_Perpustakaan_${new Date().toISOString().slice(0,10)}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
         }
 
-        // Clear Local Data
+        // Hapus Data Lokal
         function clearData() {
-            if (confirm("Apakah Anda yakin ingin menghapus semua riwayat presensi di browser ini? (Data di Google Sheets tetap aman)")) {
+            if (confirm("Apakah Anda yakin ingin menghapus semua riwayat lokal di browser ini? (Data di Google Sheets akan tetap aman)")) {
                 dataPresensi = [];
                 localStorage.removeItem('absensi_perpus_data');
                 renderTable();
@@ -402,7 +291,6 @@
             }
         }
 
-        // Helper to prevent XSS
         function escapeHtml(text) {
             return text ? String(text).replace(/[&<>"']/g, function(m) {
                 return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
