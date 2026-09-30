@@ -184,7 +184,7 @@
 
     <!-- Script Logic -->
     <script>
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbyCdhA7Bl7aYmAOyB9EGuqX0cKQqLoDf3AxCyr1vJypNTvds2jSHjEL6JLIgsKgBt2o6w/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyn__jn3dxJtKPRtr4GfjMYErNY1WSF_NF_thCsCn1moVbZ23-D9GmM6Fjr2IuqvCkv6g/exec";
         const PIN_ADMIN = "Sulitditebak"; // Ganti PIN admin sesuai keinginan Anda di sini
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -241,7 +241,22 @@
                 document.getElementById('pinInput').focus();
             }
         }
-
+async function verifyAdminPin(enteredPin) {
+  try {
+    const response = await fetch(`${SCRIPT_URL}?action=checkPin&pin=${encodeURIComponent(enteredPin)}`);
+    const result = await response.json();
+    
+    if (result.success) {
+      // Simpan session token sementara di sessionStorage
+      sessionStorage.setItem('admin_authenticated', 'true');
+      window.location.href = "admin.html";
+    } else {
+      alert("PIN Salah!");
+    }
+  } catch (error) {
+    alert("Terjadi kesalahan koneksi.");
+  }
+}
         // Handle Presensi Form Submit
         async function handleFormSubmit(event) {
             event.preventDefault();
