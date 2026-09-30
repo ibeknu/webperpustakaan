@@ -243,7 +243,7 @@
         }
 async function verifyAdminPin(enteredPin) {
   try {
-    const response = await fetch(`${SCRIPT_URL}?action=checkPin&pin=${encodeURIComponent(enteredPin)}`);
+    const response = await fetch(`${https://script.google.com/macros/s/AKfycbyn__jn3dxJtKPRtr4GfjMYErNY1WSF_NF_thCsCn1moVbZ23-D9GmM6Fjr2IuqvCkv6g/exec}?action=checkPin&pin=${encodeURIComponent(enteredPin)}`);
     const result = await response.json();
     
     if (result.success) {
