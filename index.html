@@ -13,15 +13,29 @@
         body { font-family: 'Inter', sans-serif; }
     </style>
 </head>
-</div>
-<body class="bg-slate-100 min-h-screen flex flex-col justify-between items-center p-4 sm:p-6">
+<body class="bg-slate-100 min-h-screen flex flex-col justify-between items-center p-4 sm:p-6 relative">
+
+    <!-- Tombol Menu Titik Tiga (Pojok Kanan Atas) -->
+    <div class="fixed top-4 right-4 z-40">
+        <button onclick="toggleMenu()" class="p-2.5 bg-white text-slate-600 hover:text-indigo-600 hover:bg-slate-50 border border-slate-200 rounded-full shadow-md transition focus:outline-none">
+            <i class="fa-solid fa-ellipsis-vertical text-lg px-1"></i>
+        </button>
+
+        <!-- Dropdown Menu -->
+        <div id="dropdownMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-200 py-1 text-xs sm:text-sm text-slate-700">
+            <button onclick="bukaModalLogin()" class="w-full text-left px-4 py-2.5 hover:bg-indigo-50 hover:text-indigo-600 flex items-center gap-2 transition">
+                <i class="fa-solid fa-user-shield text-indigo-500"></i>
+                <span class="font-medium">Login Admin / Petugas</span>
+            </button>
+        </div>
+    </div>
 
     <!-- Header / Branding -->
     <header class="w-full max-w-lg text-center mt-2 mb-4">
         <div class="inline-flex items-center justify-center p-3 bg-indigo-600 text-white rounded-2xl shadow-lg mb-3">
             <i class="fa-solid fa-book-open text-3xl text-amber-300"></i>
         </div>
-        <h1 class="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">Perpustakaan Unipa Blitar</h1>
+        <h1 class="text-2xl sm:text-3xl font-bold text-slate-800 tracking-tight">Selamat Datang</h1>
         <p class="text-sm sm:text-base text-slate-500 mt-1">Silakan isi presensi kehadiran pengunjung perpustakaan</p>
         
         <!-- Live Clock & Date -->
@@ -35,8 +49,8 @@
     <!-- Card Form Pengunjung -->
     <main class="w-full max-w-lg bg-white rounded-2xl shadow-xl border border-slate-200/80 p-6 sm:p-8 my-auto">
         
-        <!-- Pop-up Notifikasi Sukses -->
-        <div id="successAlert" class="hidden mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 flex items-center gap-3 animate-fade-in">
+        <!-- Pop-up Notifikasi Sukses Presensi -->
+        <div id="successAlert" class="hidden mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 flex items-center gap-3">
             <div class="p-2 bg-emerald-500 text-white rounded-full">
                 <i class="fa-solid fa-check text-lg"></i>
             </div>
@@ -119,7 +133,7 @@
                     class="w-full px-4 py-3 text-sm sm:text-base border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition bg-slate-50/50 focus:bg-white">
             </div>
 
-            <!-- Tombol Submit Besar -->
+            <!-- Tombol Submit -->
             <button type="submit" id="btnSubmit"
                 class="w-full py-3.5 px-6 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold text-base sm:text-lg rounded-xl shadow-lg shadow-indigo-200 transition duration-150 flex items-center justify-center space-x-2 mt-2">
                 <i class="fa-solid fa-paper-plane"></i>
@@ -133,17 +147,58 @@
         <p>&copy; Perpustakaan Digital. Silakan hubungi petugas jika memerlukan bantuan.</p>
     </footer>
 
-    <!-- Logic Script -->
+    <!-- ========================================== -->
+    <!-- MODAL POP-UP LOGIN ADMIN                   -->
+    <!-- ========================================== -->
+    <div id="loginModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-sm p-6 transform transition-all">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-user-shield text-indigo-600 text-lg"></i>
+                    <h3 class="font-bold text-slate-800 text-base">Otentikasi Admin</h3>
+                </div>
+                <button onclick="tutupModalLogin()" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form onsubmit="verifikasiAdmin(event)" class="mt-4 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">PIN / Password Admin</label>
+                    <input type="password" id="pinInput" required placeholder="Masukkan PIN (Default: 1234)"
+                        class="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <p id="errorMessage" class="hidden text-xs text-rose-600 mt-1"><i class="fa-solid fa-circle-exclamation"></i> PIN salah! Silakan coba lagi.</p>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="tutupModalLogin()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-lg">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg shadow">
+                        Masuk Admin
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script Logic -->
     <script>
-        // =========================================================================
-        // TEMPELKAN URL WEB APP GOOGLE APPS SCRIPT ANDA DI BAWAH INI
-        // =========================================================================
         const GAS_URL = "https://script.google.com/macros/s/AKfycbyCdhA7Bl7aYmAOyB9EGuqX0cKQqLoDf3AxCyr1vJypNTvds2jSHjEL6JLIgsKgBt2o6w/exec";
-        // =========================================================================
+        const PIN_ADMIN = "1234"; // Ganti PIN admin sesuai keinginan Anda di sini
 
         document.addEventListener('DOMContentLoaded', () => {
             updateClock();
             setInterval(updateClock, 1000);
+
+            // Close dropdown menu when clicking outside
+            document.addEventListener('click', (e) => {
+                const dropdown = document.getElementById('dropdownMenu');
+                const button = e.target.closest('button');
+                if (!button || !button.getAttribute('onclick')?.includes('toggleMenu')) {
+                    dropdown.classList.add('hidden');
+                }
+            });
         });
 
         function updateClock() {
@@ -154,6 +209,40 @@
             });
         }
 
+        // Toggle Dropdown Menu Titik Tiga
+        function toggleMenu() {
+            const dropdown = document.getElementById('dropdownMenu');
+            dropdown.classList.toggle('hidden');
+        }
+
+        // Modal Functions
+        function bukaModalLogin() {
+            document.getElementById('dropdownMenu').classList.add('hidden');
+            document.getElementById('loginModal').classList.remove('hidden');
+            document.getElementById('pinInput').focus();
+        }
+
+        function tutupModalLogin() {
+            document.getElementById('loginModal').classList.add('hidden');
+            document.getElementById('pinInput').value = '';
+            document.getElementById('errorMessage').classList.add('hidden');
+        }
+
+        // Verifikasi PIN Admin
+        function verifikasiAdmin(e) {
+            e.preventDefault();
+            const inputPin = document.getElementById('pinInput').value;
+
+            if (inputPin === PIN_ADMIN) {
+                window.location.href = "admin.html"; // Berpindah ke admin.html
+            } else {
+                document.getElementById('errorMessage').classList.remove('hidden');
+                document.getElementById('pinInput').value = '';
+                document.getElementById('pinInput').focus();
+            }
+        }
+
+        // Handle Presensi Form Submit
         async function handleFormSubmit(event) {
             event.preventDefault();
 
@@ -170,16 +259,13 @@
                 catatan: document.getElementById('catatanInput').value.trim() || '-'
             };
 
-            // Loading state
             btnSubmit.disabled = true;
             btnSubmit.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin"></i><span>Proses Menyimpan...</span>`;
 
-            // Simpan ke LocalStorage sebagai backup lokal
             let localData = JSON.parse(localStorage.getItem('absensi_perpus_data')) || [];
             localData.unshift(record);
             localStorage.setItem('absensi_perpus_data', JSON.stringify(localData));
 
-            // Kirim ke Google Sheets secara asynchronous
             if (GAS_URL && !GAS_URL.includes("PASANG_URL")) {
                 try {
                     await fetch(GAS_URL, {
@@ -193,7 +279,6 @@
                 }
             }
 
-            // Reset Form & Tampilkan Alert Sukses
             document.getElementById('presensiForm').reset();
             btnSubmit.disabled = false;
             btnSubmit.innerHTML = originalBtnText;
@@ -201,7 +286,6 @@
             alertBox.classList.remove('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
 
-            // Sembunyikan notifikasi setelah 4 detik
             setTimeout(() => {
                 alertBox.classList.add('hidden');
             }, 4000);
