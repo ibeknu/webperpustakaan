@@ -182,53 +182,62 @@
 
     <!-- Logic Script -->
     <script>
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbx4TXkIA-zhnGXu_TnbVh9HUeTKBKm5eiPxrsQ7nYqSOhYyXoNOD0m1x482x1l0BDFaJg/exec";
-        const PIN_ADMIN = "Sulitditebak"; // Sesuaikan PIN Admin Anda di sini
+       // Ganti dengan URL Web App hasil deploy baru Anda
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzm8www76ctq6jTP2iluxe1Iw9RnXvzxBLZvfKUTCgS7I92rGro0KycZkMoQ-vlAdmW1g/exec";
 
-        document.addEventListener('DOMContentLoaded', () => {
-            updateClock();
-            setInterval(updateClock, 1000);
+async function handleFormSubmit(event) {
+    event.preventDefault();
 
-            // Menutup dropdown jika mengklik di luar area menu
-            document.addEventListener('click', (e) => {
-                const dropdown = document.getElementById('dropdownMenu');
-                const button = e.target.closest('button');
-                if (!button || !button.getAttribute('onclick')?.includes('toggleMenu')) {
-                    if (dropdown) dropdown.classList.add('hidden');
-                }
+    const btnSubmit = document.getElementById('btnSubmit');
+    const alertBox = document.getElementById('successAlert');
+    const originalBtnText = btnSubmit.innerHTML;
+
+    const record = {
+        timestamp: new Date().toLocaleString('id-ID'),
+        nama: document.getElementById('namaInput').value.trim(),
+        nim_nik: document.getElementById('idInput').value.trim(),
+        kategori: document.getElementById('kategoriInput').value,
+        keperluan: document.getElementById('keperluanInput').value,
+        catatan: document.getElementById('catatanInput').value.trim() || '-'
+    };
+
+    btnSubmit.disabled = true;
+    btnSubmit.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin"></i><span>Proses Menyimpan...</span>`;
+
+    // 1. Simpan ke LocalStorage
+    let localData = JSON.parse(localStorage.getItem('absensi_perpus_data')) || [];
+    localData.unshift(record);
+    localStorage.setItem('absensi_perpus_data', JSON.stringify(localData));
+
+    // 2. Kirim ke Google Sheets
+    if (GAS_URL && !GAS_URL.includes("PASANG_URL")) {
+        try {
+            await fetch(GAS_URL, {
+                method: 'POST',
+                mode: 'no-cors', // Mencegah blokir CORS bawaan browser
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8' // Menghindari pre-flight request yang memicu error
+                },
+                body: JSON.stringify(record)
             });
-        });
-
-        function updateClock() {
-            const now = new Date();
-            const clockEl = document.getElementById('liveClock');
-            const dateEl = document.getElementById('liveDate');
-            if (clockEl) clockEl.textContent = now.toLocaleTimeString('id-ID');
-            if (dateEl) dateEl.textContent = now.toLocaleDateString('id-ID', {
-                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-            });
+            console.log("Data berhasil dikirim ke Google Sheets.");
+        } catch (error) {
+            console.error("Gagal mengirim ke Google Sheets:", error);
         }
+    }
 
-        function toggleMenu() {
-            const dropdown = document.getElementById('dropdownMenu');
-            if (dropdown) dropdown.classList.toggle('hidden');
-        }
+    // Reset Form & UI
+    document.getElementById('presensiForm').reset();
+    btnSubmit.disabled = false;
+    btnSubmit.innerHTML = originalBtnText;
 
-        function bukaModalLogin() {
-            const dropdown = document.getElementById('dropdownMenu');
-            const modal = document.getElementById('loginModal');
-            if (dropdown) dropdown.classList.add('hidden');
-            if (modal) modal.classList.remove('hidden');
-            document.getElementById('pinInput').focus();
-        }
+    alertBox.classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
-        function tutupModalLogin() {
-            const modal = document.getElementById('loginModal');
-            if (modal) modal.classList.add('hidden');
-            document.getElementById('pinInput').value = '';
-            document.getElementById('errorMessage').classList.add('hidden');
-        }
-
+    setTimeout(() => {
+        alertBox.classList.add('hidden');
+    }, 4000);
+}
         // FUNGSI UTAMA VERIFIKASI ADMIN (DIPERBAIKI)
         function verifikasiAdmin(e) {
             e.preventDefault();
