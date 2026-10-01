@@ -147,9 +147,7 @@
         <p>&copy; Perpustakaan Digital. Silakan hubungi petugas jika memerlukan bantuan.</p>
     </footer>
 
-    <!-- ========================================== -->
-    <!-- MODAL POP-UP LOGIN ADMIN                   -->
-    <!-- ========================================== -->
+    <!-- MODAL POP-UP LOGIN ADMIN -->
     <div id="loginModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-sm p-6 transform transition-all">
             <div class="flex justify-between items-center pb-3 border-b border-slate-100">
@@ -165,7 +163,7 @@
             <form onsubmit="verifikasiAdmin(event)" class="mt-4 space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">PIN / Password Admin</label>
-                    <input type="password" id="pinInput" required placeholder="Masukkan PIN (Default: 1234)"
+                    <input type="password" id="pinInput" required placeholder="Masukkan PIN"
                         class="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
                     <p id="errorMessage" class="hidden text-xs text-rose-600 mt-1"><i class="fa-solid fa-circle-exclamation"></i> PIN salah! Silakan coba lagi.</p>
                 </div>
@@ -182,59 +180,68 @@
         </div>
     </div>
 
-    <!-- Script Logic -->
+    <!-- Logic Script -->
     <script>
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzm8www76ctq6jTP2iluxe1Iw9RnXvzxBLZvfKUTCgS7I92rGro0KycZkMoQ-vlAdmW1g/exec";
-        const PIN_ADMIN = "1234"; // Ganti PIN admin sesuai keinginan Anda di sini
+        const PIN_ADMIN = "1234"; // Sesuaikan PIN Admin Anda di sini
 
         document.addEventListener('DOMContentLoaded', () => {
             updateClock();
             setInterval(updateClock, 1000);
 
-            // Close dropdown menu when clicking outside
+            // Menutup dropdown jika mengklik di luar area menu
             document.addEventListener('click', (e) => {
                 const dropdown = document.getElementById('dropdownMenu');
                 const button = e.target.closest('button');
                 if (!button || !button.getAttribute('onclick')?.includes('toggleMenu')) {
-                    dropdown.classList.add('hidden');
+                    if (dropdown) dropdown.classList.add('hidden');
                 }
             });
         });
 
         function updateClock() {
             const now = new Date();
-            document.getElementById('liveClock').textContent = now.toLocaleTimeString('id-ID');
-            document.getElementById('liveDate').textContent = now.toLocaleDateString('id-ID', {
+            const clockEl = document.getElementById('liveClock');
+            const dateEl = document.getElementById('liveDate');
+            if (clockEl) clockEl.textContent = now.toLocaleTimeString('id-ID');
+            if (dateEl) dateEl.textContent = now.toLocaleDateString('id-ID', {
                 weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
             });
         }
 
-        // Toggle Dropdown Menu Titik Tiga
         function toggleMenu() {
             const dropdown = document.getElementById('dropdownMenu');
-            dropdown.classList.toggle('hidden');
+            if (dropdown) dropdown.classList.toggle('hidden');
         }
 
-        // Modal Functions
         function bukaModalLogin() {
-            document.getElementById('dropdownMenu').classList.add('hidden');
-            document.getElementById('loginModal').classList.remove('hidden');
+            const dropdown = document.getElementById('dropdownMenu');
+            const modal = document.getElementById('loginModal');
+            if (dropdown) dropdown.classList.add('hidden');
+            if (modal) modal.classList.remove('hidden');
             document.getElementById('pinInput').focus();
         }
 
         function tutupModalLogin() {
-            document.getElementById('loginModal').classList.add('hidden');
+            const modal = document.getElementById('loginModal');
+            if (modal) modal.classList.add('hidden');
             document.getElementById('pinInput').value = '';
             document.getElementById('errorMessage').classList.add('hidden');
         }
 
-        // Verifikasi PIN Admin
+        // FUNGSI UTAMA VERIFIKASI ADMIN (DIPERBAIKI)
         function verifikasiAdmin(e) {
             e.preventDefault();
             const inputPin = document.getElementById('pinInput').value;
 
             if (inputPin === PIN_ADMIN) {
-                window.location.href = "admin.html"; // Berpindah ke admin.html
+                // 1. Simpan tanda/token login di localStorage
+                localStorage.setItem('admin_authenticated', 'true');
+                
+                // 2. Beri sedikit jeda agar localStorage tersimpan sempurna sebelum pindah
+                setTimeout(() => {
+                    window.location.href = "admin.html";
+                }, 100);
             } else {
                 document.getElementById('errorMessage').classList.remove('hidden');
                 document.getElementById('pinInput').value = '';
@@ -266,7 +273,7 @@
             localData.unshift(record);
             localStorage.setItem('absensi_perpus_data', JSON.stringify(localData));
 
-            if (GAS_URL && !GAS_URL.includes("PASANG_URL")) {
+            if (GAS_URL && !GAS_URL.includes("https://script.google.com/macros/s/AKfycbzm8www76ctq6jTP2iluxe1Iw9RnXvzxBLZvfKUTCgS7I92rGro0KycZkMoQ-vlAdmW1g/exec")) {
                 try {
                     await fetch(GAS_URL, {
                         method: 'POST',
