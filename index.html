@@ -266,36 +266,43 @@
                 catatan: document.getElementById('catatanInput').value.trim() || '-'
             };
 
-            btnSubmit.disabled = true;
-            btnSubmit.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin"></i><span>Proses Menyimpan...</span>`;
+           btnSubmit.disabled = true;
+    btnSubmit.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin"></i><span>Proses Menyimpan...</span>`;
 
-            let localData = JSON.parse(localStorage.getItem('absensi_perpus_data')) || [];
-            localData.unshift(record);
-            localStorage.setItem('absensi_perpus_data', JSON.stringify(localData));
+    // 1. Simpan ke LocalStorage
+    let localData = JSON.parse(localStorage.getItem('absensi_perpus_data')) || [];
+    localData.unshift(record);
+    localStorage.setItem('absensi_perpus_data', JSON.stringify(localData));
 
-            if (GAS_URL && !GAS_URL.includes("https://script.google.com/macros/s/AKfycbzm8www76ctq6jTP2iluxe1Iw9RnXvzxBLZvfKUTCgS7I92rGro0KycZkMoQ-vlAdmW1g/exec")) {
-                try {
-                    await fetch(GAS_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(record)
-                    });
-                } catch (error) {
-                    console.error("Gagal mengirim ke Google Sheets:", error);
-                }
-            }
+    // 2. Kirim ke Google Sheets
+    if (GAS_URL && !GAS_URL.includes("https://script.google.com/macros/s/AKfycbzm8www76ctq6jTP2iluxe1Iw9RnXvzxBLZvfKUTCgS7I92rGro0KycZkMoQ-vlAdmW1g/exec")) {
+        try {
+            await fetch(GAS_URL, {
+                method: 'POST',
+                mode: 'no-cors', // Mencegah blokir CORS bawaan browser
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8' // Menghindari pre-flight request yang memicu error
+                },
+                body: JSON.stringify(record)
+            });
+            console.log("Data berhasil dikirim ke Google Sheets.");
+        } catch (error) {
+            console.error("Gagal mengirim ke Google Sheets:", error);
+        }
+    }
 
-            document.getElementById('presensiForm').reset();
-            btnSubmit.disabled = false;
-            btnSubmit.innerHTML = originalBtnText;
+    // Reset Form & UI
+    document.getElementById('presensiForm').reset();
+    btnSubmit.disabled = false;
+    btnSubmit.innerHTML = originalBtnText;
 
-            alertBox.classList.remove('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+    alertBox.classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
-            setTimeout(() => {
-                alertBox.classList.add('hidden');
-            }, 4000);
+    setTimeout(() => {
+        alertBox.classList.add('hidden');
+    }, 4000);
+}
         }
     </script>
 </body>
