@@ -173,7 +173,7 @@
         // =========================================================================
         // TEMPELKAN URL WEB APP GOOGLE APPS SCRIPT ANDA DI BAWAH INI
         // =========================================================================
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx4TXkIA-zhnGXu_TnbVh9HUeTKBKm5eiPxrsQ7nYqSOhYyXoNOD0m1x482x1l0BDFaJg/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzm8www76ctq6jTP2iluxe1Iw9RnXvzxBLZvfKUTCgS7I92rGro0KycZkMoQ-vlAdmW1g/exec";
         // =========================================================================
 
         let dataPresensi = [];
@@ -214,7 +214,7 @@
             </tr>`;
     }
 
-    if (!SCRIPT_URL || SCRIPT_URL.includes("https://script.google.com/macros/s/AKfycbx4TXkIA-zhnGXu_TnbVh9HUeTKBKm5eiPxrsQ7nYqSOhYyXoNOD0m1x482x1l0BDFaJg/exec")) {
+    if (!SCRIPT_URL || SCRIPT_URL.includes("https://script.google.com/macros/s/AKfycbzm8www76ctq6jTP2iluxe1Iw9RnXvzxBLZvfKUTCgS7I92rGro0KycZkMoQ-vlAdmW1g/exec")) {
         console.warn("URL Google Apps Script belum dipasang.");
         dataPresensi = JSON.parse(localStorage.getItem('absensi_perpus_data')) || [];
         renderTable();
