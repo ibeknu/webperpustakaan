@@ -163,139 +163,167 @@
 
     <!-- Logic Script -->
     <script>
-        let dataPresensi = JSON.parse(localStorage.getItem('absensi_perpus_data')) || [];
+    // GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx.../exec";
 
-        document.addEventListener('DOMContentLoaded', () => {
-            updateClock();
-            setInterval(updateClock, 1000);
+    let dataPresensi = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+        updateClock();
+        setInterval(updateClock, 1000);
+        fetchDataFromGoogleSheets(); // Ambil data langsung dari Cloud/Sheets
+    });
+
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('liveClock').textContent = now.toLocaleTimeString('id-ID');
+        document.getElementById('liveDate').textContent = now.toLocaleDateString('id-ID', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+    }
+
+    // Fungsi Mengambil Data Real-Time dari Google Sheets
+    async function fetchDataFromGoogleSheets() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="py-8 text-center text-indigo-600">
+                    <i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i>
+                    Memuat data terbaru dari Google Sheets...
+                </td>
+            </tr>`;
+
+        try {
+            const response = await fetch(SCRIPT_URL);
+            dataPresensi = await response.json();
+            
+            // Simpan juga ke localStorage sebagai cadangan offline
+            localStorage.setItem('absensi_perpus_data', JSON.stringify(dataPresensi));
+
             renderTable();
             updateStats();
+        } catch (error) {
+            console.error('Gagal mengambil data:', error);
+            // Jika gagal/offline, gunakan data dari localStorage
+            dataPresensi = JSON.parse(localStorage.getItem('absensi_perpus_data')) || [];
+            renderTable();
+            updateStats();
+            alert("Gagal terhubung ke Google Sheets. Menampilkan data lokal terakhir.");
+        }
+    }
+
+    // Fungsi Logout Admin
+    function handleLogout() {
+        if (confirm("Apakah Anda yakin ingin keluar dari Admin Panel?")) {
+            window.location.href = "index.html";
+        }
+    }
+
+    // Render Tabel Presensi
+    function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+        tbody.innerHTML = '';
+
+        const filteredData = dataPresensi.filter(item => 
+            String(item.nama || '').toLowerCase().includes(searchQuery) ||
+            String(item.nim_nik || '').toLowerCase().includes(searchQuery) ||
+            String(item.kategori || '').toLowerCase().includes(searchQuery) ||
+            String(item.keperluan || '').toLowerCase().includes(searchQuery)
+        );
+
+        document.getElementById('dataCounter').textContent = `Menampilkan ${filteredData.length} dari ${dataPresensi.length} data`;
+
+        if (filteredData.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="py-8 text-center text-slate-400">
+                        <i class="fa-solid fa-inbox text-3xl mb-2 block"></i>
+                        Belum ada data presensi yang terekam.
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        filteredData.forEach(item => {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-slate-50 transition border-b border-slate-100';
+            row.innerHTML = `
+                <td class="py-2.5 px-4 font-mono text-slate-500">${escapeHtml(item.timestamp)}</td>
+                <td class="py-2.5 px-4 font-semibold text-slate-700">${escapeHtml(item.nama)}</td>
+                <td class="py-2.5 px-4 text-slate-600">${escapeHtml(item.nim_nik)}</td>
+                <td class="py-2.5 px-4"><span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-medium">${escapeHtml(item.kategori)}</span></td>
+                <td class="py-2.5 px-4 text-slate-600">${escapeHtml(item.keperluan)}</td>
+                <td class="py-2.5 px-4 text-slate-400 italic">${escapeHtml(item.catatan)}</td>
+            `;
+            tbody.appendChild(row);
         });
+    }
 
-        function updateClock() {
-            const now = new Date();
-            document.getElementById('liveClock').textContent = now.toLocaleTimeString('id-ID');
-            document.getElementById('liveDate').textContent = now.toLocaleDateString('id-ID', {
-                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-            });
+    // Update Statistik Kartu Ringkasan
+    function updateStats() {
+        document.getElementById('statTotal').textContent = dataPresensi.length;
+        document.getElementById('statTerakhir').textContent = dataPresensi.length > 0 ? dataPresensi[0].nama : '-';
+
+        if (dataPresensi.length === 0) {
+            document.getElementById('statKategori').textContent = '-';
+            document.getElementById('statKeperluan').textContent = '-';
+            return;
         }
 
-        // Fungsi Logout Admin
-        function handleLogout() {
-            if (confirm("Apakah Anda yakin ingin keluar dari Admin Panel?")) {
-                window.location.href = "index.html"; // Kembali ke form pengunjung
-            }
-        }
-
-        // Render Tabel Presensi
-        function renderTable() {
-            const tbody = document.getElementById('tableBody');
-            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-            tbody.innerHTML = '';
-
-            const filteredData = dataPresensi.filter(item => 
-                item.nama.toLowerCase().includes(searchQuery) ||
-                item.nim_nik.toLowerCase().includes(searchQuery) ||
-                item.kategori.toLowerCase().includes(searchQuery) ||
-                item.keperluan.toLowerCase().includes(searchQuery)
-            );
-
-            document.getElementById('dataCounter').textContent = `Menampilkan ${filteredData.length} dari ${dataPresensi.length} data`;
-
-            if (filteredData.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="py-8 text-center text-slate-400">
-                            <i class="fa-solid fa-inbox text-3xl mb-2 block"></i>
-                            Belum ada data presensi yang terekam.
-                        </td>
-                    </tr>`;
-                return;
-            }
-
-            filteredData.forEach(item => {
-                const row = document.createElement('tr');
-                row.className = 'hover:bg-slate-50 transition border-b border-slate-100';
-                row.innerHTML = `
-                    <td class="py-2.5 px-4 font-mono text-slate-500">${item.timestamp}</td>
-                    <td class="py-2.5 px-4 font-semibold text-slate-700">${escapeHtml(item.nama)}</td>
-                    <td class="py-2.5 px-4 text-slate-600">${escapeHtml(item.nim_nik)}</td>
-                    <td class="py-2.5 px-4"><span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-medium">${escapeHtml(item.kategori)}</span></td>
-                    <td class="py-2.5 px-4 text-slate-600">${escapeHtml(item.keperluan)}</td>
-                    <td class="py-2.5 px-4 text-slate-400 italic">${escapeHtml(item.catatan)}</td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
-        // Update Statistik Kartu Ringkasan
-        function updateStats() {
-            document.getElementById('statTotal').textContent = dataPresensi.length;
-            document.getElementById('statTerakhir').textContent = dataPresensi.length > 0 ? dataPresensi[0].nama : '-';
-
-            if (dataPresensi.length === 0) {
-                document.getElementById('statKategori').textContent = '-';
-                document.getElementById('statKeperluan').textContent = '-';
-                return;
-            }
-
-            const countKategori = {};
-            dataPresensi.forEach(i => countKategori[i.kategori] = (countKategori[i.kategori] || 0) + 1);
-            const maxKategori = Object.keys(countKategori).reduce((a, b) => countKategori[a] > countKategori[b] ? a : b);
+        const countKategori = {};
+        dataPresensi.forEach(i => { if(i.kategori) countKategori[i.kategori] = (countKategori[i.kategori] || 0) + 1; });
+        const keysKategori = Object.keys(countKategori);
+        if (keysKategori.length > 0) {
+            const maxKategori = keysKategori.reduce((a, b) => countKategori[a] > countKategori[b] ? a : b);
             document.getElementById('statKategori').textContent = maxKategori;
+        }
 
-            const countKeperluan = {};
-            dataPresensi.forEach(i => countKeperluan[i.keperluan] = (countKeperluan[i.keperluan] || 0) + 1);
-            const maxKeperluan = Object.keys(countKeperluan).reduce((a, b) => countKeperluan[a] > countKeperluan[b] ? a : b);
+        const countKeperluan = {};
+        dataPresensi.forEach(i => { if(i.keperluan) countKeperluan[i.keperluan] = (countKeperluan[i.keperluan] || 0) + 1; });
+        const keysKeperluan = Object.keys(countKeperluan);
+        if (keysKeperluan.length > 0) {
+            const maxKeperluan = keysKeperluan.reduce((a, b) => countKeperluan[a] > countKeperluan[b] ? a : b);
             document.getElementById('statKeperluan').textContent = maxKeperluan;
         }
+    }
 
-        // Export Data Ke CSV (Excel)
-        function exportToCSV() {
-            if (dataPresensi.length === 0) {
-                alert("Tidak ada data untuk diekspor!");
-                return;
-            }
-
-            let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "Waktu,Nama Lengkap,ID/NIM,Kategori,Keperluan,Catatan\n";
-
-            dataPresensi.forEach(row => {
-                const line = [
-                    `"${row.timestamp}"`,
-                    `"${row.nama}"`,
-                    `"${row.nim_nik}"`,
-                    `"${row.kategori}"`,
-                    `"${row.keperluan}"`,
-                    `"${row.catatan}"`
-                ].join(",");
-                csvContent += line + "\n";
-            });
-
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `Rekap_Presensi_Perpustakaan_${new Date().toISOString().slice(0,10)}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+    // Export Data Ke CSV
+    function exportToCSV() {
+        if (dataPresensi.length === 0) {
+            alert("Tidak ada data untuk diekspor!");
+            return;
         }
 
-        // Hapus Data Lokal
-        function clearData() {
-            if (confirm("Apakah Anda yakin ingin menghapus semua riwayat lokal di browser ini? (Data di Google Sheets akan tetap aman)")) {
-                dataPresensi = [];
-                localStorage.removeItem('absensi_perpus_data');
-                renderTable();
-                updateStats();
-            }
-        }
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Waktu,Nama Lengkap,ID/NIM,Kategori,Keperluan,Catatan\n";
 
-        function escapeHtml(text) {
-            return text ? String(text).replace(/[&<>"']/g, function(m) {
-                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
-            }) : '';
-        }
-    </script>
+        dataPresensi.forEach(row => {
+            const line = [
+                `"${row.timestamp}"`,
+                `"${row.nama}"`,
+                `"${row.nim_nik}"`,
+                `"${row.kategori}"`,
+                `"${row.keperluan}"`,
+                `"${row.catatan}"`
+            ].join(",");
+            csvContent += line + "\n";
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Rekap_Presensi_Perpustakaan_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function escapeHtml(text) {
+        return text ? String(text).replace(/[&<>"']/g, function(m) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+        }) : '';
+    }
+</script>
 </body>
 </html>
