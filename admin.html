@@ -203,36 +203,55 @@
 
         // Fetch Data dari Google Sheets
         async function fetchDataFromGoogleSheets() {
-            const tbody = document.getElementById('tableBody');
-            if (tbody) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="py-8 text-center text-indigo-600">
-                            <i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i>
-                            Memuat data terbaru dari Google Sheets...
-                        </td>
-                    </tr>`;
-            }
+    const tbody = document.getElementById('tableBody');
+    if (tbody) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="py-8 text-center text-indigo-600">
+                    <i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i>
+                    Memuat data terbaru dari Google Sheets...
+                </td>
+            </tr>`;
+    }
 
-            if (!SCRIPT_URL || SCRIPT_URL.includes("https://script.google.com/macros/s/AKfycbx4TXkIA-zhnGXu_TnbVh9HUeTKBKm5eiPxrsQ7nYqSOhYyXoNOD0m1x482x1l0BDFaJg/exec")) {
-                dataPresensi = JSON.parse(localStorage.getItem('absensi_perpus_data')) || [];
-                renderTable();
-                updateStats();
-                return;
-            }
+    if (!SCRIPT_URL || SCRIPT_URL.includes("https://script.google.com/macros/s/AKfycbx4TXkIA-zhnGXu_TnbVh9HUeTKBKm5eiPxrsQ7nYqSOhYyXoNOD0m1x482x1l0BDFaJg/exec")) {
+        console.warn("URL Google Apps Script belum dipasang.");
+        dataPresensi = JSON.parse(localStorage.getItem('absensi_perpus_data')) || [];
+        renderTable();
+        updateStats();
+        return;
+    }
 
-            try {
-                const response = await fetch(SCRIPT_URL);
-                dataPresensi = await response.json();
-                renderTable();
-                updateStats();
-            } catch (error) {
-                console.error('Gagal mengambil data:', error);
-                dataPresensi = JSON.parse(localStorage.getItem('absensi_perpus_data')) || [];
-                renderTable();
-                updateStats();
-            }
+    try {
+        // Menggunakan redirect: 'follow' untuk mengikuti redirect bawaan Google Apps Script
+        const response = await fetch(SCRIPT_URL, {
+            method: 'GET',
+            redirect: 'follow'
+        });
+
+        if (!response.ok) throw new Error("Network response was not ok");
+
+        const result = await response.json();
+
+        if (Array.isArray(result)) {
+            dataPresensi = result;
+            // Update juga ke LocalStorage sebagai cadangan
+            localStorage.setItem('absensi_perpus_data', JSON.stringify(dataPresensi));
+        } else {
+            console.error("Format respon bukan Array:", result);
+            dataPresensi = JSON.parse(localStorage.getItem('absensi_perpus_data')) || [];
         }
+
+        renderTable();
+        updateStats();
+    } catch (error) {
+        console.error('Gagal mengambil data dari Google Sheets:', error);
+        // Fallback ke data lokal jika koneksi gagal
+        dataPresensi = JSON.parse(localStorage.getItem('absensi_perpus_data')) || [];
+        renderTable();
+        updateStats();
+    }
+}
 
         // Render Tabel Presensi
         function renderTable() {
