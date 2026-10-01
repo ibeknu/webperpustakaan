@@ -184,8 +184,8 @@
 
     <!-- Script Logic -->
     <script>
-        const GAS_URL = "PASANG_URL_WEB_APP_GOOGLE_APPS_SCRIPT_ANDA_DI_SINI";
-        const PIN_ADMIN = "1234"; // Ganti PIN admin sesuai keinginan Anda di sini
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbx4TXkIA-zhnGXu_TnbVh9HUeTKBKm5eiPxrsQ7nYqSOhYyXoNOD0m1x482x1l0BDFaJg/exec";
+        const PIN_ADMIN = "Sulitditebak"; // Ganti PIN admin sesuai keinginan Anda di sini
 
         document.addEventListener('DOMContentLoaded', () => {
             updateClock();
@@ -266,7 +266,7 @@
             localData.unshift(record);
             localStorage.setItem('absensi_perpus_data', JSON.stringify(localData));
 
-            if (GAS_URL && !GAS_URL.includes("PASANG_URL")) {
+            if (GAS_URL && !GAS_URL.includes("https://script.google.com/macros/s/AKfycbx4TXkIA-zhnGXu_TnbVh9HUeTKBKm5eiPxrsQ7nYqSOhYyXoNOD0m1x482x1l0BDFaJg/exec")) {
                 try {
                     await fetch(GAS_URL, {
                         method: 'POST',
