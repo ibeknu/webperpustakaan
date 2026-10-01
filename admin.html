@@ -15,6 +15,13 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
+    <!-- Script Proteksi Paling Atas: Mencegah Flash Content Jika Belum Login -->
+    <script>
+        if (localStorage.getItem('admin_authenticated') !== 'true') {
+            window.location.replace("index.html");
+        }
+    </script>
+
     <!-- Header / Navbar Admin -->
     <header class="bg-indigo-700 text-white shadow-lg border-b border-indigo-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -33,13 +40,18 @@
                 </div>
             </div>
 
-            <!-- Header Controls (Clock + Logout Button) -->
+            <!-- Header Controls (Live Clock + Refresh + Logout Button) -->
             <div class="flex items-center gap-4">
-                <!-- Status & Live Clock -->
-                <div class="hidden sm:block text-right border-r border-indigo-500/50 pr-4">
+                <!-- Jam Digital & Tanggal -->
+                <div class="text-right border-r border-indigo-500/50 pr-4">
                     <div id="liveClock" class="text-base font-mono font-bold tracking-wider">00:00:00</div>
-                    <div id="liveDate" class="text-[11px] text-indigo-200">30 September 2026</div>
+                    <div id="liveDate" class="text-[11px] text-indigo-200">-</div>
                 </div>
+
+                <!-- Tombol Refresh Data -->
+                <button onclick="fetchDataFromGoogleSheets()" title="Muat Ulang Data" class="p-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg border border-indigo-400/30 text-white transition">
+                    <i class="fa-solid fa-rotate"></i>
+                </button>
 
                 <!-- Tombol Logout -->
                 <button onclick="handleLogout()" class="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white text-xs font-semibold rounded-lg shadow-md border border-rose-500 flex items-center gap-2 transition duration-150">
@@ -119,11 +131,6 @@
                             <i class="fa-solid fa-file-excel"></i>
                             <span class="hidden sm:inline">Export CSV</span>
                         </button>
-
-                        <!-- Clear Local Data Button -->
-                        <button onclick="clearData()" title="Hapus Data Lokal Browser" class="px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-medium rounded-lg border border-rose-200 transition">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
                     </div>
                 </div>
 
@@ -141,7 +148,7 @@
                             </tr>
                         </thead>
                         <tbody id="tableBody" class="divide-y divide-slate-100 bg-white">
-                            <!-- Dynamic Rows Generated via JS -->
+                            <!-- Rows via JS -->
                         </tbody>
                     </table>
                 </div>
@@ -150,7 +157,7 @@
             <!-- Table Footer Indicator -->
             <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
                 <span id="dataCounter">Menampilkan 0 data</span>
-                <span class="text-slate-400"><i class="fa-solid fa-database mr-1"></i>Tersimpan di LocalStorage & Google Sheets</span>
+                <span class="text-slate-400"><i class="fa-solid fa-cloud-arrow-down mr-1"></i>Terhubung dengan Google Sheets</span>
             </div>
         </div>
 
@@ -161,193 +168,194 @@
         <p>&copy; 2026 Admin Panel - Sistem Presensi Perpustakaan.</p>
     </footer>
 
-    <!-- Logic Script -->
+    <!-- Logic Script Admin -->
     <script>
-        // Cek status login saat halaman admin dimuat
-// Cek dari localStorage
-if (localStorage.getItem('admin_authenticated') !== 'true') {
-    alert("Akses ditolak! Silakan login terlebih dahulu.");
-    window.location.href = "index.html";
-}
+        // =========================================================================
+        // TEMPELKAN URL WEB APP GOOGLE APPS SCRIPT ANDA DI BAWAH INI
+        // =========================================================================
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx4TXkIA-zhnGXu_TnbVh9HUeTKBKm5eiPxrsQ7nYqSOhYyXoNOD0m1x482x1l0BDFaJg/exec";
+        // =========================================================================
 
-function handleLogout() {
-    if (confirm("Apakah Anda yakin ingin keluar?")) {
-        localStorage.removeItem('admin_authenticated'); // Hapus token saat logout
-        window.location.href = "index.html";
-    }
-}
-    // GANTI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyn__jn3dxJtKPRtr4GfjMYErNY1WSF_NF_thCsCn1moVbZ23-D9GmM6Fjr2IuqvCkv6g/exec";
+        let dataPresensi = [];
 
-    let dataPresensi = [];
-
-    document.addEventListener('DOMContentLoaded', () => {
-        updateClock();
-        setInterval(updateClock, 1000);
-        fetchDataFromGoogleSheets(); // Ambil data langsung dari Cloud/Sheets
-    });
-
-    function updateClock() {
-        const now = new Date();
-        document.getElementById('liveClock').textContent = now.toLocaleTimeString('id-ID');
-        document.getElementById('liveDate').textContent = now.toLocaleDateString('id-ID', {
-            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        // Inisialisasi saat DOM siap
+        document.addEventListener('DOMContentLoaded', () => {
+            updateClock();
+            setInterval(updateClock, 1000);
+            fetchDataFromGoogleSheets();
         });
-    }
 
-    // Fungsi Mengambil Data Real-Time dari Google Sheets
-    async function fetchDataFromGoogleSheets() {
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" class="py-8 text-center text-indigo-600">
-                    <i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i>
-                    Memuat data terbaru dari Google Sheets...
-                </td>
-            </tr>`;
+        // Live Clock Function
+        function updateClock() {
+            try {
+                const now = new Date();
+                const clockEl = document.getElementById('liveClock');
+                const dateEl = document.getElementById('liveDate');
 
-        try {
-            const response = await fetch(SCRIPT_URL);
-            dataPresensi = await response.json();
+                if (clockEl) clockEl.textContent = now.toLocaleTimeString('id-ID');
+                if (dateEl) dateEl.textContent = now.toLocaleDateString('id-ID', {
+                    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+                });
+            } catch (e) {
+                console.error("Clock error:", e);
+            }
+        }
+
+        // Fetch Data dari Google Sheets
+        async function fetchDataFromGoogleSheets() {
+            const tbody = document.getElementById('tableBody');
+            if (tbody) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="py-8 text-center text-indigo-600">
+                            <i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i>
+                            Memuat data terbaru dari Google Sheets...
+                        </td>
+                    </tr>`;
+            }
+
+            if (!SCRIPT_URL || SCRIPT_URL.includes("https://script.google.com/macros/s/AKfycbx4TXkIA-zhnGXu_TnbVh9HUeTKBKm5eiPxrsQ7nYqSOhYyXoNOD0m1x482x1l0BDFaJg/exec")) {
+                dataPresensi = JSON.parse(localStorage.getItem('absensi_perpus_data')) || [];
+                renderTable();
+                updateStats();
+                return;
+            }
+
+            try {
+                const response = await fetch(SCRIPT_URL);
+                dataPresensi = await response.json();
+                renderTable();
+                updateStats();
+            } catch (error) {
+                console.error('Gagal mengambil data:', error);
+                dataPresensi = JSON.parse(localStorage.getItem('absensi_perpus_data')) || [];
+                renderTable();
+                updateStats();
+            }
+        }
+
+        // Render Tabel Presensi
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            const searchEl = document.getElementById('searchInput');
+            const searchQuery = searchEl ? searchEl.value.toLowerCase() : '';
             
-            // Simpan juga ke localStorage sebagai cadangan offline
-            localStorage.setItem('absensi_perpus_data', JSON.stringify(dataPresensi));
+            if (!tbody) return;
+            tbody.innerHTML = '';
 
-            renderTable();
-            updateStats();
-        } catch (error) {
-            console.error('Gagal mengambil data:', error);
-            // Jika gagal/offline, gunakan data dari localStorage
-            dataPresensi = JSON.parse(localStorage.getItem('absensi_perpus_data')) || [];
-            renderTable();
-            updateStats();
-            alert("Gagal terhubung ke Google Sheets. Menampilkan data lokal terakhir.");
-        }
-    }
+            const filteredData = dataPresensi.filter(item => 
+                String(item.nama || '').toLowerCase().includes(searchQuery) ||
+                String(item.nim_nik || '').toLowerCase().includes(searchQuery) ||
+                String(item.kategori || '').toLowerCase().includes(searchQuery) ||
+                String(item.keperluan || '').toLowerCase().includes(searchQuery)
+            );
 
-   // 1. Cek Autentikasi Saat Admin Dimuat
-    // Jika tidak ada token login, LANGSUNG lempar ke index.html
-    if (localStorage.getItem('admin_authenticated') !== 'true') {
-        window.location.replace("index.html");
-    }
+            const counterEl = document.getElementById('dataCounter');
+            if (counterEl) {
+                counterEl.textContent = `Menampilkan ${filteredData.length} dari ${dataPresensi.length} data`;
+            }
 
-    // 2. Fungsi Logout
-    function handleLogout() {
-        if (confirm("Apakah Anda yakin ingin keluar dari Admin Panel?")) {
-            // Hapus token akses secara total
-            localStorage.removeItem('admin_authenticated');
-            localStorage.clear(); // Opsional: bersihkan session lokal
-            
-            // Gunakan window.location.replace agar riwayat halaman diganti (tidak bisa di-Back)
-            window.location.replace("index.html");
-        }
-    }
+            if (filteredData.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="py-8 text-center text-slate-400">
+                            <i class="fa-solid fa-inbox text-3xl mb-2 block"></i>
+                            Belum ada data presensi yang terekam.
+                        </td>
+                    </tr>`;
+                return;
+            }
 
-    // Render Tabel Presensi
-    function renderTable() {
-        const tbody = document.getElementById('tableBody');
-        const searchQuery = document.getElementById('searchInput').value.toLowerCase();
-        tbody.innerHTML = '';
-
-        const filteredData = dataPresensi.filter(item => 
-            String(item.nama || '').toLowerCase().includes(searchQuery) ||
-            String(item.nim_nik || '').toLowerCase().includes(searchQuery) ||
-            String(item.kategori || '').toLowerCase().includes(searchQuery) ||
-            String(item.keperluan || '').toLowerCase().includes(searchQuery)
-        );
-
-        document.getElementById('dataCounter').textContent = `Menampilkan ${filteredData.length} dari ${dataPresensi.length} data`;
-
-        if (filteredData.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="py-8 text-center text-slate-400">
-                        <i class="fa-solid fa-inbox text-3xl mb-2 block"></i>
-                        Belum ada data presensi yang terekam.
-                    </td>
-                </tr>`;
-            return;
+            filteredData.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-slate-50 transition border-b border-slate-100';
+                row.innerHTML = `
+                    <td class="py-2.5 px-4 font-mono text-slate-500">${escapeHtml(item.timestamp)}</td>
+                    <td class="py-2.5 px-4 font-semibold text-slate-700">${escapeHtml(item.nama)}</td>
+                    <td class="py-2.5 px-4 text-slate-600">${escapeHtml(item.nim_nik)}</td>
+                    <td class="py-2.5 px-4"><span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-medium">${escapeHtml(item.kategori)}</span></td>
+                    <td class="py-2.5 px-4 text-slate-600">${escapeHtml(item.keperluan)}</td>
+                    <td class="py-2.5 px-4 text-slate-400 italic">${escapeHtml(item.catatan)}</td>
+                `;
+                tbody.appendChild(row);
+            });
         }
 
-        filteredData.forEach(item => {
-            const row = document.createElement('tr');
-            row.className = 'hover:bg-slate-50 transition border-b border-slate-100';
-            row.innerHTML = `
-                <td class="py-2.5 px-4 font-mono text-slate-500">${escapeHtml(item.timestamp)}</td>
-                <td class="py-2.5 px-4 font-semibold text-slate-700">${escapeHtml(item.nama)}</td>
-                <td class="py-2.5 px-4 text-slate-600">${escapeHtml(item.nim_nik)}</td>
-                <td class="py-2.5 px-4"><span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-medium">${escapeHtml(item.kategori)}</span></td>
-                <td class="py-2.5 px-4 text-slate-600">${escapeHtml(item.keperluan)}</td>
-                <td class="py-2.5 px-4 text-slate-400 italic">${escapeHtml(item.catatan)}</td>
-            `;
-            tbody.appendChild(row);
-        });
-    }
+        // Update Ringkasan Kartu
+        function updateStats() {
+            const statTotal = document.getElementById('statTotal');
+            const statTerakhir = document.getElementById('statTerakhir');
+            const statKategori = document.getElementById('statKategori');
+            const statKeperluan = document.getElementById('statKeperluan');
 
-    // Update Statistik Kartu Ringkasan
-    function updateStats() {
-        document.getElementById('statTotal').textContent = dataPresensi.length;
-        document.getElementById('statTerakhir').textContent = dataPresensi.length > 0 ? dataPresensi[0].nama : '-';
+            if (statTotal) statTotal.textContent = dataPresensi.length;
+            if (statTerakhir) statTerakhir.textContent = dataPresensi.length > 0 ? dataPresensi[0].nama : '-';
 
-        if (dataPresensi.length === 0) {
-            document.getElementById('statKategori').textContent = '-';
-            document.getElementById('statKeperluan').textContent = '-';
-            return;
+            if (dataPresensi.length === 0) {
+                if (statKategori) statKategori.textContent = '-';
+                if (statKeperluan) statKeperluan.textContent = '-';
+                return;
+            }
+
+            const countKategori = {};
+            dataPresensi.forEach(i => { if(i.kategori) countKategori[i.kategori] = (countKategori[i.kategori] || 0) + 1; });
+            const keysKategori = Object.keys(countKategori);
+            if (keysKategori.length > 0 && statKategori) {
+                statKategori.textContent = keysKategori.reduce((a, b) => countKategori[a] > countKategori[b] ? a : b);
+            }
+
+            const countKeperluan = {};
+            dataPresensi.forEach(i => { if(i.keperluan) countKeperluan[i.keperluan] = (countKeperluan[i.keperluan] || 0) + 1; });
+            const keysKeperluan = Object.keys(countKeperluan);
+            if (keysKeperluan.length > 0 && statKeperluan) {
+                statKeperluan.textContent = keysKeperluan.reduce((a, b) => countKeperluan[a] > countKeperluan[b] ? a : b);
+            }
         }
 
-        const countKategori = {};
-        dataPresensi.forEach(i => { if(i.kategori) countKategori[i.kategori] = (countKategori[i.kategori] || 0) + 1; });
-        const keysKategori = Object.keys(countKategori);
-        if (keysKategori.length > 0) {
-            const maxKategori = keysKategori.reduce((a, b) => countKategori[a] > countKategori[b] ? a : b);
-            document.getElementById('statKategori').textContent = maxKategori;
+        // Logout Admin
+        function handleLogout() {
+            if (confirm("Apakah Anda yakin ingin keluar dari Admin Panel?")) {
+                localStorage.removeItem('admin_authenticated');
+                window.location.replace("index.html");
+            }
         }
 
-        const countKeperluan = {};
-        dataPresensi.forEach(i => { if(i.keperluan) countKeperluan[i.keperluan] = (countKeperluan[i.keperluan] || 0) + 1; });
-        const keysKeperluan = Object.keys(countKeperluan);
-        if (keysKeperluan.length > 0) {
-            const maxKeperluan = keysKeperluan.reduce((a, b) => countKeperluan[a] > countKeperluan[b] ? a : b);
-            document.getElementById('statKeperluan').textContent = maxKeperluan;
+        // Export Data Ke CSV
+        function exportToCSV() {
+            if (dataPresensi.length === 0) {
+                alert("Tidak ada data untuk diekspor!");
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Waktu,Nama Lengkap,ID/NIM,Kategori,Keperluan,Catatan\n";
+
+            dataPresensi.forEach(row => {
+                const line = [
+                    `"${row.timestamp || ''}"`,
+                    `"${row.nama || ''}"`,
+                    `"${row.nim_nik || ''}"`,
+                    `"${row.kategori || ''}"`,
+                    `"${row.keperluan || ''}"`,
+                    `"${row.catatan || ''}"`
+                ].join(",");
+                csvContent += line + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Rekap_Presensi_Perpustakaan_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
-    }
 
-    // Export Data Ke CSV
-    function exportToCSV() {
-        if (dataPresensi.length === 0) {
-            alert("Tidak ada data untuk diekspor!");
-            return;
+        function escapeHtml(text) {
+            return text ? String(text).replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+            }) : '';
         }
-
-        let csvContent = "data:text/csv;charset=utf-8,";
-        csvContent += "Waktu,Nama Lengkap,ID/NIM,Kategori,Keperluan,Catatan\n";
-
-        dataPresensi.forEach(row => {
-            const line = [
-                `"${row.timestamp}"`,
-                `"${row.nama}"`,
-                `"${row.nim_nik}"`,
-                `"${row.kategori}"`,
-                `"${row.keperluan}"`,
-                `"${row.catatan}"`
-            ].join(",");
-            csvContent += line + "\n";
-        });
-
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `Rekap_Presensi_Perpustakaan_${new Date().toISOString().slice(0,10)}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
-    function escapeHtml(text) {
-        return text ? String(text).replace(/[&<>"']/g, function(m) {
-            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
-        }) : '';
-    }
-</script>
+    </script>
 </body>
 </html>
